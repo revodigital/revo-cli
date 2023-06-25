@@ -3,5 +3,5 @@ export const createLog = ({log}) => {
 }
 
 export const createError = ({error}) => {
-  console.log(error)
+  console.error(error)
 }

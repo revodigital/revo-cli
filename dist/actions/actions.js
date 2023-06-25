@@ -6,6 +6,6 @@ const createLog = ({ log }) => {
 };
 exports.createLog = createLog;
 const createError = ({ error }) => {
-    console.log(error);
+    console.error(error);
 };
 exports.createError = createError;
