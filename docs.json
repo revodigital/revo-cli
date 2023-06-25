@@ -1,6 +1,6 @@
 {
-  "name": "Revo Flutter Boilerplate",
-  "description": "Documentazione per la creazione di applicazioni Flutter a partire da uno specifico boilerplate",
+  "name": "Revo CLI",
+  "description": "Documentazione per l'utilizzo della Revo CLI",
   "logo": "../assets/logo.png",
   "logoDark": "../assets/logo.png"
 }
