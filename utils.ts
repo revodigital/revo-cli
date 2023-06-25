@@ -9,7 +9,6 @@ export const createCommand = (program: Command, action: ActionsEnum) => {
   const myProgram = program.command(action)
   createOptions(myProgram, action)
   myProgram.action((args) => {
-    console.log(args);
     runAction(action, args)
   })
 }

@@ -1,7 +1,10 @@
 {
-  "name": "revo_cli",
+  "name": "@revodigital/revo-cli",
   "version": "0.0.1",
   "main": "index.ts",
+  "bin": {
+    "revo": "./dist/index.js"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
