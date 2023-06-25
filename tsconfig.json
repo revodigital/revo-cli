@@ -1,0 +1,9 @@
+{
+    "compilerOptions": {
+        "module": "commonjs",
+        "target": "es2018",
+        "outDir": "dist"
+    },
+    "include": ["index.ts"],
+    "exclude": ["node_modules"]
+}
