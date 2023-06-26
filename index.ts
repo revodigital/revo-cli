@@ -11,5 +11,6 @@ program
 
 createCommand(program, ActionsEnum.CREATE_LOG)
 createCommand(program, ActionsEnum.CREATE_ERROR)
+createCommand(program, ActionsEnum.CREATE_FLUTTER_APP)
 
 program.parse(process.argv);

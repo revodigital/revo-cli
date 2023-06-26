@@ -7,6 +7,7 @@ var ActionsEnum;
 (function (ActionsEnum) {
     ActionsEnum["CREATE_LOG"] = "create-log";
     ActionsEnum["CREATE_ERROR"] = "create-error";
+    ActionsEnum["CREATE_FLUTTER_APP"] = "create-flutter-app";
 })(ActionsEnum || (exports.ActionsEnum = ActionsEnum = {}));
 const prepareOptions = (action) => {
     switch (action) {
@@ -15,6 +16,9 @@ const prepareOptions = (action) => {
         }
         case ActionsEnum.CREATE_ERROR: {
             return actionOptions_1.createErrorOptions;
+        }
+        case ActionsEnum.CREATE_FLUTTER_APP: {
+            return actionOptions_1.createFlutterOptions;
         }
         default: {
             break;
@@ -30,6 +34,10 @@ const runAction = (action, args) => {
         }
         case ActionsEnum.CREATE_ERROR: {
             (0, actions_1.createError)(args);
+            break;
+        }
+        case ActionsEnum.CREATE_FLUTTER_APP: {
+            (0, actions_1.createFlutterApp)();
             break;
         }
         default: {
