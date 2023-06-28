@@ -35,7 +35,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.changeBundleId = exports.changeAppName = exports.extractAndRenameFolder = exports.downloadRepoZip = exports.getInput = exports.selectFolder = exports.createCommand = exports.successfulText = exports.errorText = exports.warningText = void 0;
+exports.updateMainActivityAndDirectory = exports.changeBundleId = exports.changeAppName = exports.extractAndRenameFolder = exports.downloadRepoZip = exports.getInput = exports.selectFolder = exports.createCommand = exports.successfulText = exports.errorText = exports.warningText = void 0;
 const actionsModel_1 = require("./actions/actionsModel");
 const chalk_1 = __importDefault(require("chalk"));
 const fs = __importStar(require("fs"));
@@ -133,13 +133,17 @@ exports.extractAndRenameFolder = extractAndRenameFolder;
 const deleteZip = (zipFilePath) => {
     fs.unlinkSync(zipFilePath);
 };
-const changeAppName = (fileRepository, appName) => __awaiter(void 0, void 0, void 0, function* () {
-    yield fileRepository.changeIosAppName(appName);
-    yield fileRepository.changeAndroidAppName(appName);
+const changeAppName = (fileRepository, appName, appPath) => __awaiter(void 0, void 0, void 0, function* () {
+    yield fileRepository.changeIosAppName(appName, appPath);
+    yield fileRepository.changeAndroidAppName(appName, appPath);
 });
 exports.changeAppName = changeAppName;
-const changeBundleId = (fileRepository, bundleId) => __awaiter(void 0, void 0, void 0, function* () {
-    yield fileRepository.changeIosBundleId({ bundleId: bundleId });
-    yield fileRepository.changeAndroidBundleId({ bundleId: bundleId });
+const changeBundleId = (fileRepository, bundleId, appPath) => __awaiter(void 0, void 0, void 0, function* () {
+    yield fileRepository.changeIosBundleId({ bundleId: bundleId, appPath: appPath });
+    yield fileRepository.changeAndroidBundleId({ bundleId: bundleId, appPath: appPath });
 });
 exports.changeBundleId = changeBundleId;
+const updateMainActivityAndDirectory = (fileRepository, bundleId) => __awaiter(void 0, void 0, void 0, function* () {
+    yield fileRepository.updateMainActivity();
+});
+exports.updateMainActivityAndDirectory = updateMainActivityAndDirectory;

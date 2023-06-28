@@ -22,6 +22,15 @@ var __importStar = (this && this.__importStar) || function (mod) {
     __setModuleDefault(result, mod);
     return result;
 };
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.prepareFlutterApp = void 0;
 const flutterModel_1 = require("./flutterModel");
@@ -42,32 +51,20 @@ const prepareFlutterApp = ({ method }) => {
     }
 };
 exports.prepareFlutterApp = prepareFlutterApp;
-const defaultFlutterApp = () => {
-    (0, utils_1.selectFolder)().then((value) => {
+const defaultFlutterApp = () => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const value = yield (0, utils_1.selectFolder)();
         const selectedFolderAbsolutePath = path.resolve(value);
-        (0, utils_1.getInput)("Inserire il nome del progetto:").then((name) => {
-            (0, utils_1.getInput)("Inserire il bundleIdentifier(package):").then((identifier) => {
-                (0, utils_1.downloadRepoZip)(types_1.AppTypesEnum.FLUTTER, flutterModel_1.FlutterGHBranchesEnum.DEAFULT, selectedFolderAbsolutePath, name).then((zipFilePath) => {
-                    (0, utils_1.extractAndRenameFolder)(zipFilePath, selectedFolderAbsolutePath, name);
-                    let fileRepository = new FileRepository_1.FileRepository();
-                    (0, utils_1.changeAppName)(fileRepository, name).then(() => {
-                        (0, utils_1.changeBundleId)(fileRepository, identifier).then(() => {
-                            process.exit(0);
-                        }).catch((err) => {
-                            console.log((0, utils_1.successfulText)(err));
-                        });
-                    }).catch((erro) => {
-                        console.log((0, utils_1.errorText)(erro));
-                        return null;
-                    });
-                }).catch((error) => {
-                    console.log((0, utils_1.errorText)('Errore durante il download zip:\n' + error));
-                    process.exit(1);
-                });
-            });
-        });
-    }).catch((error) => {
-        console.log((0, utils_1.errorText)('Errore durante la selezione della cartella:\n' + error));
-        process.exit(1);
-    });
-};
+        const name = yield (0, utils_1.getInput)("Inserire il nome del progetto:");
+        const identifier = yield (0, utils_1.getInput)("Inserire il bundleIdentifier(com.app.example):");
+        const zipFilePath = yield (0, utils_1.downloadRepoZip)(types_1.AppTypesEnum.FLUTTER, flutterModel_1.FlutterGHBranchesEnum.DEAFULT, selectedFolderAbsolutePath, name);
+        (0, utils_1.extractAndRenameFolder)(zipFilePath, selectedFolderAbsolutePath, name);
+        let fileRepository = new FileRepository_1.FileRepository();
+        yield (0, utils_1.changeAppName)(fileRepository, name, path.join(selectedFolderAbsolutePath, name));
+        yield (0, utils_1.changeBundleId)(fileRepository, identifier, path.join(selectedFolderAbsolutePath, name));
+        yield (0, utils_1.updateMainActivityAndDirectory)(fileRepository, identifier);
+    }
+    catch (e) {
+        console.log((0, utils_1.successfulText)(e));
+    }
+});

@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 import { program }                      from 'commander';
-import { createCommand } from './utils';
-import { ActionsEnum }                  from './actions/actionsModel';
+import { createCommand } from './mobile_app/utils';
+import { ActionsEnum }                  from './mobile_app/actions/actionsModel';
 
 program
   .version('0.0.1')

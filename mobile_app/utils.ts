@@ -10,6 +10,9 @@ import { AppTypesEnum }          from './types';
 import * as fs                   from 'fs';
 import inquirer                  from 'inquirer';
 import axios                     from 'axios';
+import * as path                 from 'path';
+import { FileRepository }        from './FileRepository';
+import AdmZip                    from 'adm-zip';
 
 export const warningText = chalk.yellow
 export const errorText = chalk.red
@@ -66,10 +69,10 @@ export const getInput = async (description: string) => {
   }
 }
 
-export const downloadRepoZip = async (type: AppTypesEnum, branch: FlutterGHBranchesEnum, path: string, projectName: string) => {
+export const downloadRepoZip = async (type: AppTypesEnum, branch: FlutterGHBranchesEnum, pathD: string, projectName: string) => {
   const url = `https://github.com/revodigital/${type}/archive/${branch}.zip`;
-  const zipFileName = projectName + ".zip"
-  const zipFilePath = path + '/' + zipFileName;
+  const zipFileName = projectName + branch + ".zip"
+  const zipFilePath = pathD + '/' + zipFileName;
   const file = fs.createWriteStream(zipFilePath);
 
   const { data } = await axios({
@@ -84,4 +87,43 @@ export const downloadRepoZip = async (type: AppTypesEnum, branch: FlutterGHBranc
     file.on('finish', () => resolve(zipFilePath));
     file.on('error', reject);
   });
+}
+
+export const extractAndRenameFolder = (zipFilePath: string, extractedFolderPath: string, newFolderName: string) => {
+  const zip = new AdmZip(zipFilePath);
+  zip.extractAllTo(extractedFolderPath, /*overwrite*/ true);
+
+  const extractedFolderName = zip.getEntries()[0]?.entryName.split('/')[0];
+  const extractedFolder = path.join(extractedFolderPath, extractedFolderName);
+
+  const renamedFolderPath = path.join(extractedFolderPath, newFolderName);
+  fs.mkdirSync(renamedFolderPath);
+
+  const files = fs.readdirSync(extractedFolder);
+  files.forEach((file) => {
+    const sourcePath = path.join(extractedFolder, file);
+    const targetPath = path.join(renamedFolderPath, file);
+    fs.renameSync(sourcePath, targetPath);
+  });
+
+  fs.rmdirSync(extractedFolder);
+  deleteZip(zipFilePath);
+}
+
+const deleteZip = (zipFilePath: string) => {
+  fs.unlinkSync(zipFilePath);
+}
+
+export const changeAppName = async (fileRepository: FileRepository, appName: string, appPath: string) => {
+  await fileRepository.changeIosAppName(appName, appPath);
+  await fileRepository.changeAndroidAppName(appName, appPath);
+}
+
+export const changeBundleId = async (fileRepository: FileRepository, bundleId: string, appPath: string) => {
+  await fileRepository.changeIosBundleId({bundleId: bundleId, appPath: appPath});
+  await fileRepository.changeAndroidBundleId({bundleId: bundleId, appPath: appPath});
+}
+
+export const updateMainActivityAndDirectory = async (fileRepository: FileRepository, bundleId: string) => {
+  await fileRepository.updateMainActivity()
 }

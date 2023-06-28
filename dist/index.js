@@ -2,8 +2,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const commander_1 = require("commander");
-const utils_1 = require("./utils");
-const actionsModel_1 = require("./actions/actionsModel");
+const utils_1 = require("./mobile_app/utils");
+const actionsModel_1 = require("./mobile_app/actions/actionsModel");
 commander_1.program
     .version('0.0.1')
     .description('revo_cli');
