@@ -145,24 +145,23 @@ class FileRepository {
             console.log((0, utils_1.successfulText)("Android appname cambiato in: " + appName));
         });
     }
-    updateMainActivity() {
+    updateMainActivity(appPath, identifier) {
         return __awaiter(this, void 0, void 0, function* () {
-            let path = yield this.findMainActivity();
+            let path = yield this.findMainActivity(appPath);
             if (path != null) {
-                //this.processMainActivity();
+                yield this.processMainActivity(appPath + "/" + this.pathActivity, path.path, identifier);
             }
         });
     }
-    findMainActivity() {
+    findMainActivity(appPath) {
         return __awaiter(this, void 0, void 0, function* () {
-            let files = yield this.dirContents(this.pathActivity);
-            for (let item in files) {
-                console.log(item);
-                /*if (item.isDirectory == false) {
-                  if (item.path.endsWith('MainActivity.kt')) {
-                    return item;
-                  }
-                }*/
+            let files = yield this.dirContents(appPath + "/" + this.pathActivity);
+            for (let i = 0; i < files.length; i++) {
+                if (files[i].isDirectory == false) {
+                    if (files[i].path.endsWith('MainActivity.kt')) {
+                        return files[i];
+                    }
+                }
             }
             return null;
         });
@@ -172,9 +171,9 @@ class FileRepository {
             const files = [];
             return new Promise((resolve, reject) => {
                 try {
-                    const fileNames = fs_1.default.readdirSync(dir);
+                    const fileNames = fs_1.default.readdirSync(dir, { recursive: true });
                     fileNames.forEach((fileName) => {
-                        const filePath = path.join(dir, fileName);
+                        const filePath = path.join(dir, fileName.toString());
                         const stats = fs_1.default.statSync(filePath);
                         files.push({ path: filePath, isDirectory: stats.isDirectory() });
                     });
@@ -184,6 +183,57 @@ class FileRepository {
                     reject(error);
                 }
             });
+        });
+    }
+    processMainActivity(folderPath, path, newBundleId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const newPackageNameRegex = /(package.*)/;
+            const fileContents = yield fs_1.default.promises.readFile(path, 'utf-8');
+            const updatedFileContents = fileContents.replace(newPackageNameRegex, `package ${newBundleId}`);
+            yield fs_1.default.promises.writeFile(path, updatedFileContents, 'utf-8');
+            console.log((0, utils_1.successfulText)("Aggiornato file MainActivity.kt"));
+            const newPackagePath = newBundleId.toString().replace('.', '/');
+            const newPath = `${folderPath}/${newPackagePath}`;
+            yield fs_1.default.promises.mkdir(newPath, { recursive: true });
+            yield fs_1.default.promises.rename(path, `${newPath}/MainActivity.kt`);
+            console.log((0, utils_1.successfulText)('Aggiornata struttura di cartelle in base al nuovo bundleId'));
+            yield this.deleteEmptyDirs(folderPath);
+        });
+    }
+    deleteEmptyDirs(folderPath) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const dirs = yield this.dirContents(folderPath);
+            const reversedDirs = dirs.reverse();
+            for (const dir of reversedDirs) {
+                if (dir.isDirectory) {
+                    const files = fs_1.default.readdirSync(dir.path);
+                    if (files.length === 0) {
+                        fs_1.default.rmdirSync(dir.path);
+                    }
+                }
+            }
+        });
+    }
+    addIgnoredFiles(folderPath, fileName, android) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const sourceFilePath = path.join(__dirname, android == true ? 'ignoredFiles/android' : android == false ? 'ignoredFiles/ios' : 'ignoredFiles', fileName);
+            fs_1.default.copyFile(sourceFilePath, folderPath + "/" + fileName, (error) => {
+                if (error) {
+                    console.log((0, utils_1.errorText)('Si è verificato un errore durante la copia del file: ' + error));
+                }
+            });
+        });
+    }
+    editInformationForIgnoredFiles(filePath, oldString, newString) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let contentLineByLine = yield this.readFileAsLineByline({ filePath: filePath });
+            for (let i = 0; i < contentLineByLine.length; i++) {
+                if (contentLineByLine[i].includes(oldString)) {
+                    contentLineByLine[i] = newString;
+                    break;
+                }
+            }
+            yield this.writeFile({ filePath: filePath, content: contentLineByLine.join('\n') });
         });
     }
 }

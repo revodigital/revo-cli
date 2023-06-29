@@ -41,7 +41,9 @@ const FileRepository_1 = require("../../FileRepository");
 const prepareFlutterApp = ({ method }) => {
     switch (method) {
         case flutterModel_1.FlutterEnum.DEAFULT: {
-            defaultFlutterApp();
+            if ((0, utils_1.checkFlutterAndAndroidSDK)()) {
+                defaultFlutterApp();
+            }
             break;
         }
         default: {
@@ -61,10 +63,16 @@ const defaultFlutterApp = () => __awaiter(void 0, void 0, void 0, function* () {
         (0, utils_1.extractAndRenameFolder)(zipFilePath, selectedFolderAbsolutePath, name);
         let fileRepository = new FileRepository_1.FileRepository();
         yield (0, utils_1.changeAppName)(fileRepository, name, path.join(selectedFolderAbsolutePath, name));
+        console.log((0, utils_1.blackText)("----------"));
         yield (0, utils_1.changeBundleId)(fileRepository, identifier, path.join(selectedFolderAbsolutePath, name));
-        yield (0, utils_1.updateMainActivityAndDirectory)(fileRepository, identifier);
+        console.log((0, utils_1.blackText)("----------"));
+        yield (0, utils_1.updateMainActivityAndDirectory)(fileRepository, path.join(selectedFolderAbsolutePath, name), identifier);
+        console.log((0, utils_1.blackText)("----------"));
+        yield (0, utils_1.addAndUpdateIgnoredFiles)(fileRepository, path.join(selectedFolderAbsolutePath, name), name);
+        console.log((0, utils_1.successfulBg)((0, utils_1.whiteText)("Progetto configurato!\n")));
+        console.log((0, utils_1.blackText)("All\'apertura del progetto dovrai eseguire le seguenti azioni:\n1. flutter pub get"));
     }
     catch (e) {
-        console.log((0, utils_1.successfulText)(e));
+        console.log((0, utils_1.errorText)(e));
     }
 });

@@ -110,22 +110,21 @@ export class FileRepository {
     console.log(successfulText("Android appname cambiato in: " + appName));
   }
 
-  async updateMainActivity() {
-    let path = await this.findMainActivity();
+  async updateMainActivity(appPath: string, identifier: string) {
+    let path = await this.findMainActivity(appPath);
     if (path != null) {
-      //this.processMainActivity();
+      await this.processMainActivity(appPath + "/" + this.pathActivity, path.path, identifier);
     }
   }
 
-  async findMainActivity() {
-    let files : Array<any> = await this.dirContents(this.pathActivity);
-    for (let item in files) {
-      console.log(item);
-      /*if (item.isDirectory == false) {
-        if (item.path.endsWith('MainActivity.kt')) {
-          return item;
+  async findMainActivity(appPath: string) {
+    let files : Array<any> = await this.dirContents(appPath + "/" + this.pathActivity);
+    for (let i = 0; i < files.length; i++) {
+      if (files[i].isDirectory == false) {
+        if (files[i].path.endsWith('MainActivity.kt')) {
+          return files[i];
         }
-      }*/
+      }
     }
     return null;
   }
@@ -134,9 +133,9 @@ export class FileRepository {
     const files = [];
     return new Promise((resolve, reject) => {
       try {
-        const fileNames = fs.readdirSync(dir);
+        const fileNames = fs.readdirSync(dir, {recursive: true});
         fileNames.forEach((fileName) => {
-          const filePath = path.join(dir, fileName);
+          const filePath = path.join(dir, fileName.toString());
           const stats = fs.statSync(filePath);
           files.push({ path: filePath, isDirectory: stats.isDirectory() });
         });
@@ -147,22 +146,56 @@ export class FileRepository {
     });
   }
 
-  /*Future<void> processMainActivity(File path, String type) async {
-    var extension = type == 'java' ? 'java' : 'kt';
-    print('Project is using $type');
-    print('Updating MainActivity.$extension');
-    await replaceInFileRegex(path.path, '(package.*)', "package ${newPackageName}");
+  async processMainActivity(folderPath, path, newBundleId) {
+    const newPackageNameRegex = /(package.*)/;
+    const fileContents = await fs.promises.readFile(path, 'utf-8');
+    const updatedFileContents = fileContents.replace(newPackageNameRegex, `package ${newBundleId}`);
+    await fs.promises.writeFile(path, updatedFileContents, 'utf-8');
 
-    String newPackagePath = newPackageName.replaceAll('.', '/');
-    String newPath = '${PATH_ACTIVITY}${type}/$newPackagePath';
+    console.log(successfulText("Aggiornato file MainActivity.kt"));
 
-    print('Creating New Directory Structure');
-    await Directory(newPath).create(recursive: true);
-    await path.rename(newPath + '/MainActivity.$extension');
+    const newPackagePath = newBundleId.toString().replace('.', '/');
+    const newPath = `${folderPath}/${newPackagePath}`;
 
-    print('Deleting old directories');
+    await fs.promises.mkdir(newPath, { recursive: true });
+    await fs.promises.rename(path, `${newPath}/MainActivity.kt`);
 
-    await deleteEmptyDirs(type);
-  }*/
+    console.log(successfulText('Aggiornata struttura di cartelle in base al nuovo bundleId'));
 
+    await this.deleteEmptyDirs(folderPath);
+  }
+
+  async deleteEmptyDirs(folderPath) {
+    const dirs = await this.dirContents(folderPath);
+    const reversedDirs = dirs.reverse();
+
+    for (const dir of reversedDirs) {
+      if (dir.isDirectory) {
+        const files = fs.readdirSync(dir.path);
+        if (files.length === 0) {
+          fs.rmdirSync(dir.path);
+        }
+      }
+    }
+  }
+
+  async addIgnoredFiles(folderPath, fileName, android: boolean | null) {
+    const sourceFilePath = path.join(__dirname, android == true ? 'ignoredFiles/android' : android == false ? 'ignoredFiles/ios' : 'ignoredFiles', fileName);
+    fs.copyFile(sourceFilePath, folderPath + "/" + fileName, (error) => {
+      if (error) {
+        console.log(errorText('Si è verificato un errore durante la copia del file: ' + error));
+      }
+    });
+  }
+
+  async editInformationForIgnoredFiles(filePath, oldString, newString) {
+    let contentLineByLine : Array<any> = await this.readFileAsLineByline({filePath: filePath});
+    for (let i = 0; i < contentLineByLine!.length; i++) {
+      if (contentLineByLine[i].includes(oldString)) {
+        contentLineByLine[i] = newString;
+        break;
+      }
+    }
+    await this.writeFile({filePath: filePath, content: contentLineByLine.join('\n')});
+  }
 }

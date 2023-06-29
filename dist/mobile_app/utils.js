@@ -35,7 +35,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.updateMainActivityAndDirectory = exports.changeBundleId = exports.changeAppName = exports.extractAndRenameFolder = exports.downloadRepoZip = exports.getInput = exports.selectFolder = exports.createCommand = exports.successfulText = exports.errorText = exports.warningText = void 0;
+exports.checkFlutterAndAndroidSDK = exports.addAndUpdateIgnoredFiles = exports.updateMainActivityAndDirectory = exports.changeBundleId = exports.changeAppName = exports.extractAndRenameFolder = exports.downloadRepoZip = exports.getInput = exports.selectFolder = exports.createCommand = exports.whiteText = exports.errorBg = exports.successfulBg = exports.blackText = exports.successfulText = exports.errorText = exports.warningText = void 0;
 const actionsModel_1 = require("./actions/actionsModel");
 const chalk_1 = __importDefault(require("chalk"));
 const fs = __importStar(require("fs"));
@@ -43,9 +43,14 @@ const inquirer_1 = __importDefault(require("inquirer"));
 const axios_1 = __importDefault(require("axios"));
 const path = __importStar(require("path"));
 const adm_zip_1 = __importDefault(require("adm-zip"));
+const child_process_1 = require("child_process");
 exports.warningText = chalk_1.default.yellow;
 exports.errorText = chalk_1.default.red;
 exports.successfulText = chalk_1.default.green;
+exports.blackText = chalk_1.default.black;
+exports.successfulBg = chalk_1.default.bgGreen;
+exports.errorBg = chalk_1.default.bgRed;
+exports.whiteText = chalk_1.default.white;
 const createCommand = (program, action) => {
     const myProgram = program.command(action);
     createOptions(myProgram, action);
@@ -115,7 +120,7 @@ exports.downloadRepoZip = downloadRepoZip;
 const extractAndRenameFolder = (zipFilePath, extractedFolderPath, newFolderName) => {
     var _a;
     const zip = new adm_zip_1.default(zipFilePath);
-    zip.extractAllTo(extractedFolderPath, /*overwrite*/ true);
+    zip.extractAllTo(extractedFolderPath, true);
     const extractedFolderName = (_a = zip.getEntries()[0]) === null || _a === void 0 ? void 0 : _a.entryName.split('/')[0];
     const extractedFolder = path.join(extractedFolderPath, extractedFolderName);
     const renamedFolderPath = path.join(extractedFolderPath, newFolderName);
@@ -143,7 +148,59 @@ const changeBundleId = (fileRepository, bundleId, appPath) => __awaiter(void 0, 
     yield fileRepository.changeAndroidBundleId({ bundleId: bundleId, appPath: appPath });
 });
 exports.changeBundleId = changeBundleId;
-const updateMainActivityAndDirectory = (fileRepository, bundleId) => __awaiter(void 0, void 0, void 0, function* () {
-    yield fileRepository.updateMainActivity();
+const updateMainActivityAndDirectory = (fileRepository, appPath, bundleId) => __awaiter(void 0, void 0, void 0, function* () {
+    yield fileRepository.updateMainActivity(appPath, bundleId);
 });
 exports.updateMainActivityAndDirectory = updateMainActivityAndDirectory;
+const addAndUpdateIgnoredFiles = (fileRepository, appPath, appName) => __awaiter(void 0, void 0, void 0, function* () {
+    const androidIgnoredFilePath = 'android/';
+    yield addIgnoredFiles(fileRepository, appPath);
+    yield updateIgnoredFiles(fileRepository, appPath, appName);
+    fs.renameSync(path.join(appPath, androidIgnoredFilePath, "flutter_boilerplate_android.iml"), path.join(appPath, androidIgnoredFilePath, appName + "_android.iml"));
+    fs.renameSync(path.join(appPath, "flutter_revo_boilerplate.iml"), path.join(appPath, appName + ".iml"));
+});
+exports.addAndUpdateIgnoredFiles = addAndUpdateIgnoredFiles;
+const addIgnoredFiles = (fileRepository, appPath) => __awaiter(void 0, void 0, void 0, function* () {
+    const androidIgnoredFilePath = 'android/';
+    const iOSIgnoredFilePath1 = 'ios/Flutter/';
+    const iOSIgnoredFilePath2 = 'ios/Runner/';
+    yield fileRepository.addIgnoredFiles(path.join(appPath, androidIgnoredFilePath), "flutter_boilerplate_android.iml", true);
+    yield fileRepository.addIgnoredFiles(path.join(appPath, androidIgnoredFilePath), "gradlew", true);
+    yield fileRepository.addIgnoredFiles(path.join(appPath, androidIgnoredFilePath), "gradlew.bat", true);
+    yield fileRepository.addIgnoredFiles(path.join(appPath, androidIgnoredFilePath), "local.properties", true);
+    yield fileRepository.addIgnoredFiles(path.join(appPath, iOSIgnoredFilePath1), "flutter_export_environment.sh", false);
+    yield fileRepository.addIgnoredFiles(path.join(appPath, iOSIgnoredFilePath1), "Generated.xcconfig", false);
+    yield fileRepository.addIgnoredFiles(path.join(appPath, iOSIgnoredFilePath2), "GeneratedPluginRegistrant.h", false);
+    yield fileRepository.addIgnoredFiles(path.join(appPath, iOSIgnoredFilePath2), "GeneratedPluginRegistrant.m", false);
+    yield fileRepository.addIgnoredFiles(appPath, "flutter_revo_boilerplate.iml", null);
+});
+const updateIgnoredFiles = (fileRepository, appPath, appName) => __awaiter(void 0, void 0, void 0, function* () {
+    const androidIgnoredFilePath = 'android/';
+    const iOSIgnoredFilePath1 = 'ios/Flutter/';
+    const flutterSdk = getFlutterSdk();
+    const androidSdkPath = process.env.ANDROID_SDK_ROOT || process.env.ANDROID_HOME || '';
+    yield fileRepository.editInformationForIgnoredFiles(path.join(appPath, androidIgnoredFilePath, "local.properties"), "sdk.dir=", "sdk.dir=" + androidSdkPath);
+    yield fileRepository.editInformationForIgnoredFiles(path.join(appPath, androidIgnoredFilePath, "local.properties"), "flutter.sdk=", "flutter.sdk=" + flutterSdk);
+    yield fileRepository.editInformationForIgnoredFiles(path.join(appPath, iOSIgnoredFilePath1, "flutter_export_environment.sh"), "export \"FLUTTER_ROOT=\"", "export \"FLUTTER_ROOT=" + flutterSdk + "\"");
+    yield fileRepository.editInformationForIgnoredFiles(path.join(appPath, iOSIgnoredFilePath1, "flutter_export_environment.sh"), "export \"FLUTTER_APPLICATION_PATH=\"", "export \"FLUTTER_APPLICATION_PATH=" + appPath + "\"");
+});
+const getFlutterSdk = () => {
+    const flutterBinPath = (0, child_process_1.execSync)('which flutter').toString().trim();
+    return path.resolve(flutterBinPath, '..', '..');
+};
+const checkFlutterAndAndroidSDK = () => {
+    try {
+        (0, child_process_1.execSync)('flutter --version');
+        const androidSdkPath = process.env.ANDROID_SDK_ROOT || process.env.ANDROID_HOME || '';
+        if (androidSdkPath === '') {
+            console.log((0, exports.errorBg)("Android SDK non installata, processo annullato"));
+            process.exit(3);
+        }
+        return true;
+    }
+    catch (error) {
+        console.log((0, exports.errorBg)("Flutter SDK non installata, processo annullato"));
+        process.exit(3);
+    }
+};
+exports.checkFlutterAndAndroidSDK = checkFlutterAndAndroidSDK;

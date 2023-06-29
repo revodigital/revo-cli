@@ -1,12 +1,14 @@
 import { FlutterEnum, FlutterGHBranchesEnum } from './flutterModel';
 import {
-  changeAppName, changeBundleId,
+  addAndUpdateIgnoredFiles,
+  blackText,
+  changeAppName, changeBundleId, checkFlutterAndAndroidSDK,
   downloadRepoZip,
   errorText, extractAndRenameFolder,
   getInput,
-  selectFolder,
-  successfulText, updateMainActivityAndDirectory,
-  warningText
+  selectFolder, successfulBg,
+  updateMainActivityAndDirectory,
+  warningText, whiteText
 } from '../../utils';
 import * as path          from 'path';
 import {
@@ -17,7 +19,9 @@ import { FileRepository } from '../../FileRepository';
 export const prepareFlutterApp = ({method}) => {
   switch (method) {
     case FlutterEnum.DEAFULT: {
-      defaultFlutterApp()
+      if (checkFlutterAndAndroidSDK()){
+        defaultFlutterApp()
+      }
       break;
     }
 
@@ -41,9 +45,15 @@ const defaultFlutterApp = async () => {
 
     let fileRepository : FileRepository = new FileRepository();
     await changeAppName(fileRepository, name, path.join(selectedFolderAbsolutePath, name))
+    console.log(blackText("----------"));
     await changeBundleId(fileRepository, identifier, path.join(selectedFolderAbsolutePath, name))
-    await updateMainActivityAndDirectory(fileRepository, identifier)
+    console.log(blackText("----------"));
+    await updateMainActivityAndDirectory(fileRepository, path.join(selectedFolderAbsolutePath, name), identifier)
+    console.log(blackText("----------"));
+    await addAndUpdateIgnoredFiles(fileRepository, path.join(selectedFolderAbsolutePath, name), name)
+    console.log(successfulBg(whiteText("Progetto configurato!\n")));
+    console.log(blackText("All\'apertura del progetto dovrai eseguire le seguenti azioni:\n1. flutter pub get"));
   } catch (e) {
-    console.log(successfulText(e));
+    console.log(errorText(e));
   }
 }

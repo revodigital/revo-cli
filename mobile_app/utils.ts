@@ -13,10 +13,15 @@ import axios                     from 'axios';
 import * as path                 from 'path';
 import { FileRepository }        from './FileRepository';
 import AdmZip                    from 'adm-zip';
+import { execSync }              from 'child_process';
 
 export const warningText = chalk.yellow
 export const errorText = chalk.red
 export const successfulText = chalk.green
+export const blackText = chalk.black
+export const successfulBg = chalk.bgGreen
+export const errorBg = chalk.bgRed
+export const whiteText = chalk.white
 
 export const createCommand = (program: Command, action: ActionsEnum) => {
   const myProgram = program.command(action)
@@ -91,7 +96,7 @@ export const downloadRepoZip = async (type: AppTypesEnum, branch: FlutterGHBranc
 
 export const extractAndRenameFolder = (zipFilePath: string, extractedFolderPath: string, newFolderName: string) => {
   const zip = new AdmZip(zipFilePath);
-  zip.extractAllTo(extractedFolderPath, /*overwrite*/ true);
+  zip.extractAllTo(extractedFolderPath, true);
 
   const extractedFolderName = zip.getEntries()[0]?.entryName.split('/')[0];
   const extractedFolder = path.join(extractedFolderPath, extractedFolderName);
@@ -124,6 +129,63 @@ export const changeBundleId = async (fileRepository: FileRepository, bundleId: s
   await fileRepository.changeAndroidBundleId({bundleId: bundleId, appPath: appPath});
 }
 
-export const updateMainActivityAndDirectory = async (fileRepository: FileRepository, bundleId: string) => {
-  await fileRepository.updateMainActivity()
+export const updateMainActivityAndDirectory = async (fileRepository: FileRepository, appPath: string, bundleId: string) => {
+  await fileRepository.updateMainActivity(appPath, bundleId)
+}
+
+export const addAndUpdateIgnoredFiles = async (fileRepository: FileRepository, appPath: string, appName) => {
+  const androidIgnoredFilePath = 'android/'
+  await addIgnoredFiles(fileRepository, appPath);
+  await updateIgnoredFiles(fileRepository, appPath, appName);
+
+  fs.renameSync(path.join(appPath, androidIgnoredFilePath, "flutter_boilerplate_android.iml"), path.join(appPath, androidIgnoredFilePath, appName + "_android.iml"));
+  fs.renameSync(path.join(appPath, "flutter_revo_boilerplate.iml"), path.join(appPath, appName + ".iml"));
+}
+
+const addIgnoredFiles = async (fileRepository: FileRepository, appPath: string,) => {
+  const androidIgnoredFilePath = 'android/'
+  const iOSIgnoredFilePath1 = 'ios/Flutter/'
+  const iOSIgnoredFilePath2 = 'ios/Runner/'
+
+  await fileRepository.addIgnoredFiles(path.join(appPath, androidIgnoredFilePath), "flutter_boilerplate_android.iml", true)
+  await fileRepository.addIgnoredFiles(path.join(appPath, androidIgnoredFilePath), "gradlew", true)
+  await fileRepository.addIgnoredFiles(path.join(appPath, androidIgnoredFilePath), "gradlew.bat", true)
+  await fileRepository.addIgnoredFiles(path.join(appPath, androidIgnoredFilePath), "local.properties", true)
+  await fileRepository.addIgnoredFiles(path.join(appPath, iOSIgnoredFilePath1), "flutter_export_environment.sh", false)
+  await fileRepository.addIgnoredFiles(path.join(appPath, iOSIgnoredFilePath1), "Generated.xcconfig", false)
+  await fileRepository.addIgnoredFiles(path.join(appPath, iOSIgnoredFilePath2), "GeneratedPluginRegistrant.h", false)
+  await fileRepository.addIgnoredFiles(path.join(appPath, iOSIgnoredFilePath2), "GeneratedPluginRegistrant.m", false)
+  await fileRepository.addIgnoredFiles(appPath, "flutter_revo_boilerplate.iml", null)
+}
+
+const updateIgnoredFiles = async (fileRepository: FileRepository, appPath: string, appName: string) => {
+  const androidIgnoredFilePath = 'android/'
+  const iOSIgnoredFilePath1 = 'ios/Flutter/'
+
+  const flutterSdk = getFlutterSdk()
+  const androidSdkPath = process.env.ANDROID_SDK_ROOT || process.env.ANDROID_HOME || '';
+  await fileRepository.editInformationForIgnoredFiles(path.join(appPath, androidIgnoredFilePath, "local.properties"), "sdk.dir=", "sdk.dir=" + androidSdkPath)
+  await fileRepository.editInformationForIgnoredFiles(path.join(appPath, androidIgnoredFilePath, "local.properties"), "flutter.sdk=", "flutter.sdk=" + flutterSdk)
+  await fileRepository.editInformationForIgnoredFiles(path.join(appPath, iOSIgnoredFilePath1, "flutter_export_environment.sh"), "export \"FLUTTER_ROOT=\"", "export \"FLUTTER_ROOT=" + flutterSdk + "\"")
+  await fileRepository.editInformationForIgnoredFiles(path.join(appPath, iOSIgnoredFilePath1, "flutter_export_environment.sh"), "export \"FLUTTER_APPLICATION_PATH=\"", "export \"FLUTTER_APPLICATION_PATH=" + appPath + "\"")
+}
+
+const getFlutterSdk = () => {
+  const flutterBinPath = execSync('which flutter').toString().trim();
+  return path.resolve(flutterBinPath, '..', '..');
+}
+
+export const checkFlutterAndAndroidSDK = () => {
+  try {
+    execSync('flutter --version');
+    const androidSdkPath = process.env.ANDROID_SDK_ROOT || process.env.ANDROID_HOME || '';
+    if (androidSdkPath === ''){
+      console.log(errorBg("Android SDK non installata, processo annullato"));
+      process.exit(3);
+    }
+    return true;
+  } catch (error) {
+    console.log(errorBg("Flutter SDK non installata, processo annullato"));
+    process.exit(3);
+  }
 }
