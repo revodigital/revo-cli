@@ -1,4 +1,3 @@
 node_modules/
 *.tgz
-dist/mobile_app/ignoredFiles
 mobile_app/ignoredFiles
