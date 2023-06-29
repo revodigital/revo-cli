@@ -1,6 +1,6 @@
 {
   "name": "@revodigital/revo-cli",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "main": "index.ts",
   "bin": {
     "revo": "./dist/index.js"
