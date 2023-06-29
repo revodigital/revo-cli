@@ -50,7 +50,7 @@ const defaultFlutterApp = async () => {
     console.log(blackText("----------"));
     await updateMainActivityAndDirectory(fileRepository, path.join(selectedFolderAbsolutePath, name), identifier)
     console.log(blackText("----------"));
-    await addAndUpdateIgnoredFiles(fileRepository, path.join(selectedFolderAbsolutePath, name), name)
+    await addAndUpdateIgnoredFiles(fileRepository, path.join(selectedFolderAbsolutePath, name), name, identifier)
     console.log(successfulBg(whiteText("Progetto configurato!\n")));
     console.log(blackText("All\'apertura del progetto dovrai eseguire le seguenti azioni:\n1. flutter pub get"));
   } catch (e) {

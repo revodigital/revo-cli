@@ -68,7 +68,7 @@ const defaultFlutterApp = () => __awaiter(void 0, void 0, void 0, function* () {
         console.log((0, utils_1.blackText)("----------"));
         yield (0, utils_1.updateMainActivityAndDirectory)(fileRepository, path.join(selectedFolderAbsolutePath, name), identifier);
         console.log((0, utils_1.blackText)("----------"));
-        yield (0, utils_1.addAndUpdateIgnoredFiles)(fileRepository, path.join(selectedFolderAbsolutePath, name), name);
+        yield (0, utils_1.addAndUpdateIgnoredFiles)(fileRepository, path.join(selectedFolderAbsolutePath, name), name, identifier);
         console.log((0, utils_1.successfulBg)((0, utils_1.whiteText)("Progetto configurato!\n")));
         console.log((0, utils_1.blackText)("All\'apertura del progetto dovrai eseguire le seguenti azioni:\n1. flutter pub get"));
     }

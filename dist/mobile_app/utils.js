@@ -152,10 +152,10 @@ const updateMainActivityAndDirectory = (fileRepository, appPath, bundleId) => __
     yield fileRepository.updateMainActivity(appPath, bundleId);
 });
 exports.updateMainActivityAndDirectory = updateMainActivityAndDirectory;
-const addAndUpdateIgnoredFiles = (fileRepository, appPath, appName) => __awaiter(void 0, void 0, void 0, function* () {
+const addAndUpdateIgnoredFiles = (fileRepository, appPath, appName, identifier) => __awaiter(void 0, void 0, void 0, function* () {
     const androidIgnoredFilePath = 'android/';
     yield addIgnoredFiles(fileRepository, appPath);
-    yield updateIgnoredFiles(fileRepository, appPath, appName);
+    yield updateIgnoredFiles(fileRepository, appPath, identifier);
     fs.renameSync(path.join(appPath, androidIgnoredFilePath, "flutter_boilerplate_android.iml"), path.join(appPath, androidIgnoredFilePath, appName + "_android.iml"));
     fs.renameSync(path.join(appPath, "flutter_revo_boilerplate.iml"), path.join(appPath, appName + ".iml"));
 });
@@ -174,7 +174,7 @@ const addIgnoredFiles = (fileRepository, appPath) => __awaiter(void 0, void 0, v
     yield fileRepository.addIgnoredFiles(path.join(appPath, iOSIgnoredFilePath2), "GeneratedPluginRegistrant.m", false);
     yield fileRepository.addIgnoredFiles(appPath, "flutter_revo_boilerplate.iml", null);
 });
-const updateIgnoredFiles = (fileRepository, appPath, appName) => __awaiter(void 0, void 0, void 0, function* () {
+const updateIgnoredFiles = (fileRepository, appPath, bundleId) => __awaiter(void 0, void 0, void 0, function* () {
     const androidIgnoredFilePath = 'android/';
     const iOSIgnoredFilePath1 = 'ios/Flutter/';
     const flutterSdk = getFlutterSdk();
@@ -183,6 +183,9 @@ const updateIgnoredFiles = (fileRepository, appPath, appName) => __awaiter(void 
     yield fileRepository.editInformationForIgnoredFiles(path.join(appPath, androidIgnoredFilePath, "local.properties"), "flutter.sdk=", "flutter.sdk=" + flutterSdk);
     yield fileRepository.editInformationForIgnoredFiles(path.join(appPath, iOSIgnoredFilePath1, "flutter_export_environment.sh"), "export \"FLUTTER_ROOT=\"", "export \"FLUTTER_ROOT=" + flutterSdk + "\"");
     yield fileRepository.editInformationForIgnoredFiles(path.join(appPath, iOSIgnoredFilePath1, "flutter_export_environment.sh"), "export \"FLUTTER_APPLICATION_PATH=\"", "export \"FLUTTER_APPLICATION_PATH=" + appPath + "\"");
+    yield fileRepository.editInformationForIgnoredFiles(path.join(appPath, androidIgnoredFilePath + "app/src/main/", "AndroidManifest.xml"), "package=\"it.revodigital.flutterboilerplate.flutter_boilerplate\"", "package=\"" + bundleId + "\">");
+    yield fileRepository.editInformationForIgnoredFiles(path.join(appPath, androidIgnoredFilePath + "app/src/debug/", "AndroidManifest.xml"), "package=\"it.revodigital.flutterboilerplate.flutter_boilerplate\"", "package=\"" + bundleId + "\">");
+    yield fileRepository.editInformationForIgnoredFiles(path.join(appPath, androidIgnoredFilePath + "app/src/profile/", "AndroidManifest.xml"), "package=\"it.revodigital.flutterboilerplate.flutter_boilerplate\"", "package=\"" + bundleId + "\">");
 });
 const getFlutterSdk = () => {
     const flutterBinPath = (0, child_process_1.execSync)('which flutter').toString().trim();
